@@ -12,6 +12,7 @@ require_once 'Rtm/Client.php';
 require_once 'Rtm/Service/AbstractService.php';
 require_once 'Rtm/Service/Auth.php';
 require_once 'Rtm/Service/Tasks.php';
+require_once 'Rtm/Service/Timelines.php';
 
 
 require_once 'lib/ToJson.php';

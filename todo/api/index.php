@@ -28,14 +28,34 @@ $apis = [
   ),
 
   get(
-    'タスク追加', '/tasks/add',
+    'タスク追加',
+    '/tasks/add',
     ['token', 'task_name', 'task_due_date_optional'],
     function($params, $request) {
       $taskRepository = new TaskRepository($params['token']);
-      return $taskRepository->getRecentTaskList()->toJson();
+      return $taskRepository->addTask($params['task_name'], $params['task_due_date_optional'])->toJson();
     }
   ),
 
+  get(
+    'タスク完了',
+    '/tasks/complete',
+    ['token', 'task_id'],
+    function($params, $request) {
+      $taskRepository = new TaskRepository($params['token']);
+      return $taskRepository->complete($params['task_id'])->toJson();
+    }
+  ),
+
+  get(
+    'タスク削除',
+    '/tasks/delete',
+    ['token', 'task_id'],
+    function($params, $request) {
+      $taskRepository = new TaskRepository($params['token']);
+      return $taskRepository->delete($params['task_id'])->toJson();
+    }
+  ),
 
   get(
     'タスク名更新',
@@ -65,36 +85,6 @@ $app->get('/apis', function(Request $request) use($apis) {
     $html .= sprintf($format, $api['apiName'], $api['path'], $input);
   }
   return $html;
-});
-
-$app->get('/tasks/update/duedate', function(Request $request) {
-  $token = $request->query->get('token');
-  $taskId = $request->query->get('task_id');
-  $task_due_date_optional = $request->query->get('task_due_date_optional');
-  return json_encode([
-    "task_id" => $taskId,
-    "token" => $token
-  ]);
-});
-
-
-$app->get('/tasks/complete', function(Request $request) {
-  $token = $request->query->get('token');
-  $taskId = $request->query->get('task_id');
-  return json_encode([
-    "task_id" => $taskId,
-    "token" => $token
-  ]);
-});
-
-
-$app->get('/tasks/delete', function(Request $request) {
-  $token = $request->query->get('token');
-  $taskId = $request->query->get('task_id');
-  return json_encode([
-    "task_id" => $taskId,
-    "token" => $token
-  ]);
 });
 
 $app->get('/hello/{name}', function($name, Request $request) use($app) {

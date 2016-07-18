@@ -35,7 +35,7 @@ class Task implements ToJson {
   }
 
   public static function createIdSet($id) {
-    $ary = split('_', $id);
+    $ary = explode('_', $id);
     return [
       'list_id' => $ary[0],
       'taskseries_id' => $ary[1],
@@ -45,7 +45,7 @@ class Task implements ToJson {
 
   public static function convertRtmTaskToTask($listId, $rtmTask) {
     return new Task(
-      Task::createId($listId, $rtmTask->get('id'), $rtmTask->get('id')),
+      Task::createId($listId, $rtmTask->get('id'), $rtmTask->get('task')->get('id')),
       // $listId . '_' . $task->get('id') . '_' . $task->get('id'),
       $rtmTask->get('name'),
       $rtmTask->get('task')->get('due'),
