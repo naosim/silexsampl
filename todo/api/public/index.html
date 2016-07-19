@@ -161,16 +161,6 @@ var First = Vue.extend({
 
 var taskRepository = TaskRepository();
 
-var convertStringDateToDate = (v) => {
-  if(v.task_due_date_optional) {
-    v.task_due_date_optional = new Date(v.task_due_date_optional)
-  }
-  if(v.task_completed_date_optional) {
-    v.task_completed_date_optional = new Date(v.task_completed_date_optional)
-  }
-  return v;
-};
-
 var Main = Vue.extend({
     template: '#tasklist-template',
     data: () => model,
@@ -192,15 +182,7 @@ var Main = Vue.extend({
           taskName,
           formatedEndDate,
           (data) => {
-            var v = data;
-            if(v.task_due_date_optional) {
-              v.task_due_date_optional = new Date(v.task_due_date_optional)
-            }
-            if(v.task_completed_date_optional) {
-              v.task_completed_date_optional = new Date(v.task_completed_date_optional)
-            }
-            this.taskList.push(v);
-            console.log(v);
+            this.pushOrUpdateTaskToModel(data);
             success();
           },
           (data) => {}
@@ -214,8 +196,8 @@ var Main = Vue.extend({
         this.addNewTaskCommon(this.newTaskNameOfDay[targetDay], formatDate('YYYY-MM-DD', day(targetDay - 1)), () => this.newTaskNameOfDay.splice(targetDay, 1, ''));
       },
       taskListOfDay: function(targetDay) {
-        var start = new Date(formatDate('YYYY-MM-DD 09:00:00', day(targetDay - 1)));
-        var end   = new Date(formatDate('YYYY-MM-DD 09:00:00', day(targetDay)));
+        var start = new Date(formatDate('YYYY-MM-DD 00:00:00', day(targetDay - 1)));
+        var end   = new Date(formatDate('YYYY-MM-DD 00:00:00', day(targetDay)));
         return this.sortedTaskList().filter(v => {
           if(!v.task_due_date_optional) {
             return false;
@@ -250,59 +232,45 @@ var Main = Vue.extend({
         }
       },
       done: function(task) {
-        var self = this;
         task.task_completed_date_optional = new Date();// とりあえず
         this.pushOrUpdateTaskToModel(task)
         taskRepository.complete(
           this, this.auth.token, task.task_id,
-          (data, status, request) => {
-            console.log(data.detail);
-            var updatedTask = data.detail.map(convertStringDateToDate)[0];
-            this.pushOrUpdateTaskToModel(updatedTask);
-          },
-          function (data, status, request) {
-            //GETメソッドが失敗した場合の処理
-            console.log(data);
-            // alert(JSON.stringify(data, null, '  '))
-        })
+          (data) => this.pushOrUpdateTaskToModel(data),
+          (data) => console.error(data)
+        )
       },
       taskDelete: function(task) {
         for(var i = 0; i < this.taskList.length; i++) {
           if(this.taskList[i].task_id == task.task_id) {
             this.taskList.splice(i, 1);
-            return;
+            break;
           }
         }
+
+        taskRepository.deleteTask(this, this.auth.token, task.task_id,
+          (data) => {},
+          (data) => {
+            console.error(data);
+            // 戻す
+            this.pushOrUpdateTaskToModel(task);
+          }
+        );
       },
       moveToNextDay: function(task) {
         task.task_due_date_optional = new Date(task.task_due_date_optional.getTime() + 24 * 60 * 60 * 1000);
         this.pushOrUpdateTaskToModel(task);
+        taskRepository.updateTask(this, this.auth.token, task.task_id, task.task_name,
+          task.task_due_date_optional ? formatDate('YYYY-MM-DD', task.task_due_date_optional) : "",
+          (data) => {},
+          (data) => {
+            console.error(data);
+            // 戻す
+            this.pushOrUpdateTaskToModel(task);
+          }
+        );
       },
-      sortedTaskList: function() {
-        var sortTask = (a, b) => {// 下ならプラスを返す
-          if(a.task_due_date_optional && !b.task_due_date_optional) {
-            return -1;
-          }
-          if(!a.task_due_date_optional && b.task_due_date_optional) {
-            return 1;
-          }
-          if(!a.task_due_date_optional && !b.task_due_date_optional) {
-            if(a.task_id < b.task_id) return -1;
-            if(a.task_id == b.task_id) return 0;
-            if(a.task_id > b.task_id) return 1;
-          }
-          return a.task_due_date_optional.getTime() - b.task_due_date_optional.getTime();
-        };
-
-        return this.taskList.filter((v) => {
-          if(!v.task_completed_date_optional) {
-            return true;
-          }
-          // 24時間以上過去は切る
-          return Date.now() - 24 * 60 * 60 * 1000 - v.task_completed_date_optional.getTime() < 0;
-        })
-        .sort(sortTask);
-      },
+      sortedTaskList: () => taskRepository.sortedTaskList(model.taskList),
     },
     computed: {
       today: () => formatedDay(0),
@@ -327,9 +295,7 @@ var Main = Vue.extend({
       console.log("created main");
 
       taskRepository.getTaskList(this, this.auth.token,
-        function (data, status, request) {
-          model.taskList = data.map(convertStringDateToDate);
-        },
+        (data) => model.taskList = data,
         function (data, status, request) {
           //GETメソッドが失敗した場合の処理
           console.log(data);

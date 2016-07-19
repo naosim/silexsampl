@@ -56,7 +56,27 @@ class TaskRepository {
     return $this->handleOneTaskListResult($dueResult);
   }
 
-  public function setDueDate($taskId, $dueDateOptional = null) {
+  public function update($taskId, $name, $dueDateOptional = null) {
+    if($this->updateName($taskId, $name) == null) {
+      return null;
+    }
+    return $this->updateDueDate($taskId, $dueDateOptional);
+  }
+
+  public function updateName($taskId, $name) {
+    $taskService = $this->rtm->getService(Rtm::SERVICE_TASKS);
+    $taskIdSet = Task::createIdSet($taskId);
+    $result = $taskService->setName(
+      $taskIdSet['task_id'],
+      $taskIdSet['list_id'],
+      $taskIdSet['taskseries_id'],
+      $name,
+      $this->createTimeline()
+    );
+    return $this->handleOneTaskListResult($result);
+  }
+
+  public function updateDueDate($taskId, $dueDateOptional = null) {
     $taskService = $this->rtm->getService(Rtm::SERVICE_TASKS);
     $taskIdSet = Task::createIdSet($taskId);
     $result = $taskService->setDueDate(
@@ -98,7 +118,7 @@ class TaskRepository {
 
   private function handleOneTaskListResult($result) {
     if($result->get('stat') != 'ok') {
-      return;// TODO error
+      return null;// TODO error
     }
     return Task::convertRtmTaskToTask(
       $result->get('list')->get('id'),

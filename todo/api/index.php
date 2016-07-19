@@ -16,6 +16,10 @@ $app->get('/', function() {
 //   return $taskRepository->getRecentTaskList()->toJson();
 // });
 
+function convertDateOptional($stringDate = null) {
+  return $stringDate != null && strlen($stringDate) > 0 ? $stringDate : null;
+}
+
 $apis = [
   get(
     'タスク取得',
@@ -33,7 +37,7 @@ $apis = [
     ['token', 'task_name', 'task_due_date_optional'],
     function($params, $request) {
       $taskRepository = new TaskRepository($params['token']);
-      return createOkResult($taskRepository->addTask($params['task_name'], $params['task_due_date_optional'])->toArray());
+      return createOkResult($taskRepository->addTask($params['task_name'], convertDateOptional($params['task_due_date_optional']))->toArray());
     }
   ),
 
@@ -58,18 +62,16 @@ $apis = [
   ),
 
   get(
-    'タスク名更新',
-    '/tasks/update/name',
-    ['token', 'task_id', 'task_name'],
+    'タスク更新',
+    '/tasks/update',
+    ['token', 'task_id', 'task_name', 'task_due_date_optional'],
     function($params, $request) {
-      $token = $params['token'];
-      $taskId = $params['task_id'];
-      $name = $params['task_name'];
-      return createOkResult([
-        "task_id" => $taskId,
-        "token" => $token,
-        "name" => $name
-      ]);
+      $taskRepository = new TaskRepository($params['token']);
+      return createOkResult($taskRepository->update(
+        $params['task_id'],
+        $params['task_name'],
+        convertDateOptional($params['task_due_date_optional'])
+      )->toArray());
     }
   )
 ];
@@ -81,8 +83,8 @@ $app->get('/apis', function(Request $request) use($apis) {
     foreach($api['params'] as $i => $value) {
       $input .= sprintf('%s: <input type="text" name="%s" /></br>', $value, $value);
     }
-    $format = '<h2>%s</h2><form action=".%s" method="get">%s<input type="submit" /></form><hr/>';
-    $html .= sprintf($format, $api['apiName'], $api['path'], $input);
+    $format = '<h2>%s</h2><div>%s</div><form action=".%s" method="get">%s<input type="submit" /></form><hr/>';
+    $html .= sprintf($format, $api['apiName'], $api['path'], $api['path'], $input);
   }
   return $html;
 });
