@@ -63,19 +63,36 @@ var TaskRepository = function() {
   };
 
   var sortedTaskList = function(taskList) {
+    var getTargetDate = (task) => {
+      if(!task.task_due_date_optional && !task.task_completed_date_optional) {
+        return null;
+      }
+
+      if(task.task_due_date_optional && !task.task_completed_date_optional) {
+        return task.task_due_date_optional;
+      }
+
+      if(!task.task_due_date_optional && task.task_completed_date_optional) {
+        return task.task_completed_date_optional;
+      }
+
+      return task.task_due_date_optional.getTime() < task.task_completed_date_optional.getTime() ? task.task_due_date_optional : task.task_completed_date_optional;
+    }
     var sortTask = (a, b) => {// 下ならプラスを返す
-      if(a.task_due_date_optional && !b.task_due_date_optional) {
+      var aTargetDate = getTargetDate(a);
+      var bTargetDate = getTargetDate(b);
+      if(aTargetDate && !bTargetDate) {
         return -1;
       }
-      if(!a.task_due_date_optional && b.task_due_date_optional) {
+      if(!aTargetDate && bTargetDate) {
         return 1;
       }
-      if(!a.task_due_date_optional && !b.task_due_date_optional) {
+      if(!aTargetDate && !bTargetDate) {
         if(a.task_id < b.task_id) return -1;
         if(a.task_id == b.task_id) return 0;
         if(a.task_id > b.task_id) return 1;
       }
-      return a.task_due_date_optional.getTime() - b.task_due_date_optional.getTime();
+      return aTargetDate.getTime() - bTargetDate.getTime();
     };
 
     return taskList.filter((v) => {
