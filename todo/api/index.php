@@ -33,7 +33,7 @@ $apis = [
     ['token', 'task_name', 'task_due_date_optional'],
     function($params, $request) {
       $taskRepository = new TaskRepository($params['token']);
-      return $taskRepository->addTask($params['task_name'], $params['task_due_date_optional'])->toJson();
+      return createOkResult($taskRepository->addTask($params['task_name'], $params['task_due_date_optional'])->toArray());
     }
   ),
 
@@ -43,7 +43,7 @@ $apis = [
     ['token', 'task_id'],
     function($params, $request) {
       $taskRepository = new TaskRepository($params['token']);
-      return $taskRepository->complete($params['task_id'])->toJson();
+      return createOkResult($taskRepository->complete($params['task_id'])->toArray());
     }
   ),
 
@@ -53,7 +53,7 @@ $apis = [
     ['token', 'task_id'],
     function($params, $request) {
       $taskRepository = new TaskRepository($params['token']);
-      return $taskRepository->delete($params['task_id'])->toJson();
+      return createOkResult($taskRepository->delete($params['task_id'])->toArray());
     }
   ),
 
@@ -75,13 +75,13 @@ $apis = [
 ];
 
 $app->get('/apis', function(Request $request) use($apis) {
-  $html = '';
+  $html = '<h1>API一覧</h1>';
   foreach($apis as $apiIndex => $api) {
     $input = '';
     foreach($api['params'] as $i => $value) {
       $input .= sprintf('%s: <input type="text" name="%s" /></br>', $value, $value);
     }
-    $format = '<h2>%s</h2><form action=".%s" method="get">%s<input type="submit" /></form>';
+    $format = '<h2>%s</h2><form action=".%s" method="get">%s<input type="submit" /></form><hr/>';
     $html .= sprintf($format, $api['apiName'], $api['path'], $input);
   }
   return $html;

@@ -1,1 +1,359 @@
-<h1>hoge</h1>
+<!DOCTYPE html>
+<link href="css/skyblue.min.css" rel='stylesheet' type='text/css'>
+<style>
+body {
+  padding: 24px;
+}
+.task-end-date {
+  color: #aaa;
+  font-size: 8pt;
+}
+
+.task-name {
+  display: inline-block;
+  width: 540px;
+}
+
+input[type=text].form-control {
+  width: 540px;
+}
+.task-edit-buttons {
+  display: inline-block;
+  visibility: hidden;
+}
+.task:hover .task-edit-buttons {
+  visibility: visible;
+}
+</style>
+
+<div id="app">
+  <h1>My TODO</h1>
+  <p>
+    <!-- ナビゲーション向けに v-link ディレクティブを使用 -->
+    <a v-link="{ path: '/' }">Go to First</a>
+    <a v-link="{ path: '/bar' }">Go to Bar</a>
+  </p>
+  <!-- route outlet -->
+  <router-view></router-view>
+</div>
+
+<template id="login-template">
+  <a v-link="{ path: '/foo' }">Login</a>
+</template>
+
+<template id="tasklist-template">
+  <h3>今日 {{today}} <input class="form-control" type="text" v-model="newTaskNameOfDay[1]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(1)">add</button></h3>
+  <ul>
+    <li class="task" v-for="task in taskListOfDay(1)">
+      <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
+    </li>
+  </ul>
+
+  <hr>
+  <h3>明日 {{day2}} <input class="form-control" type="text" v-model="newTaskNameOfDay[2]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(2)">add</button></h3>
+  <ul>
+    <li v-for="task in taskListOfDay(2)" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">
+      {{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span>
+    </li>
+  </ul>
+
+  <hr>
+  <h3>明後日 {{day3}} <input class="form-control" type="text" v-model="newTaskNameOfDay[3]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(3)">add</button></h3>
+  <ul>
+    <li v-for="task in taskListOfDay(3)" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">
+      {{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span>
+    </li>
+  </ul>
+
+  <hr>
+  <h3>3日後 {{day4}} <input class="form-control" type="text" v-model="newTaskNameOfDay[4]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(4)">add</button></h3>
+  <ul>
+    <li v-for="task in taskListOfDay(4)" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">
+      {{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span>
+    </li>
+  </ul>
+
+  <hr>
+  <h3>4日後 {{day5}} <input class="form-control" type="text" v-model="newTaskNameOfDay[5]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(5)">add</button></h3>
+  <ul>
+    <li v-for="task in taskListOfDay(5)" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">
+      {{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span>
+    </li>
+  </ul>
+
+  <hr>
+  <h3>5日後 {{day6}} <input class="form-control" type="text" v-model="newTaskNameOfDay[6]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(6)">add</button></h3>
+  <ul>
+    <li v-for="task in taskListOfDay(6)" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">
+      {{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span>
+    </li>
+  </ul>
+
+  <hr>
+  <h3>6日後 {{day7}} <input class="form-control" type="text" v-model="newTaskNameOfDay[7]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(7)">add</button></h3>
+  <ul>
+    <li v-for="task in taskListOfDay(7)" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">
+      {{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span>
+    </li>
+  </ul>
+
+  <hr>
+  <h3>以降</h3>
+  <ul>
+    <li v-for="task in otherTaskList" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">
+      {{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span>
+    </li>
+  </ul>
+
+  <hr>
+  <h3>BACKLOG</h3>
+  <ul>
+    <li v-for="task in backlogTaskList" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">
+      {{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span> <button class="btn btn-success" v-on:click="done(task)">DONE</button>
+    </li>
+  </ul>
+</template>
+
+<script src="https://cdn.jsdelivr.net/vue/1.0.26/vue.min.js"></script>
+<script src="https://cdn.jsdelivr.net/vue.router/0.7.10/vue-router.min.js"></script>
+<script src="https://cdn.jsdelivr.net/vue.resource/0.9.3/vue-resource.min.js"></script>
+<script src="js/lib.js"></script>
+<script src="js/TaskRepository.js"></script>
+<script>
+var serverResponseSample = [];
+var model = {
+  auth: {
+    token: null,
+    checkToken: {
+      result: false,
+      checkStartDate: null,
+      lastCheckDate: null
+    }
+  },
+  taskList: [],
+  newTaskNameOfDay: [null, '', '', '', '', '', '' ,''],
+
+}
+
+
+
+var First = Vue.extend({
+  template: '#login-template',
+  data: () => model,
+  created: function() {
+
+    if(this.$data.auth.token) {
+      // トークンが有れば次へ
+      router.go('/main');
+    } else {
+      // 無ければログイン
+      // flob取得
+      // サーバ
+    }
+  }
+})
+// いくつかのコンポーネントを定義します
+// var Login = Vue.extend({
+//     template: '#login-template'
+// })
+
+
+
+var taskRepository = TaskRepository();
+
+var convertStringDateToDate = (v) => {
+  if(v.task_due_date_optional) {
+    v.task_due_date_optional = new Date(v.task_due_date_optional)
+  }
+  if(v.task_completed_date_optional) {
+    v.task_completed_date_optional = new Date(v.task_completed_date_optional)
+  }
+  return v;
+};
+
+var Main = Vue.extend({
+    template: '#tasklist-template',
+    data: () => model,
+    watch: {
+      'auth.token': (val, oldVal) => {
+        if(!val) {
+          router.go('/');
+        }
+      }
+    },
+    methods: {
+      addNewTaskCommon: function(taskName, formatedEndDate, success) {
+        if(taskName.length == 0) {
+          return;
+        }
+        taskRepository.addTask(
+          this,
+          this.auth.token,
+          taskName,
+          formatedEndDate,
+          (data) => {
+            var v = data;
+            if(v.task_due_date_optional) {
+              v.task_due_date_optional = new Date(v.task_due_date_optional)
+            }
+            if(v.task_completed_date_optional) {
+              v.task_completed_date_optional = new Date(v.task_completed_date_optional)
+            }
+            this.taskList.push(v);
+            console.log(v);
+            success();
+          },
+          (data) => {}
+        );
+      },
+      addTodaysNewTask: function(targetDay) {
+        this.newTaskNameOfDay[targetDay] = this.newTaskNameOfDay[targetDay].trim();
+        if(this.newTaskNameOfDay[targetDay].length == 0) {
+          return;
+        }
+        this.addNewTaskCommon(this.newTaskNameOfDay[targetDay], formatDate('YYYY-MM-DD', day(targetDay - 1)), () => this.newTaskNameOfDay.splice(targetDay, 1, ''));
+      },
+      taskListOfDay: function(targetDay) {
+        var start = new Date(formatDate('YYYY-MM-DD 09:00:00', day(targetDay - 1)));
+        var end   = new Date(formatDate('YYYY-MM-DD 09:00:00', day(targetDay)));
+        return this.sortedTaskList().filter(v => {
+          if(!v.task_due_date_optional) {
+            return false;
+          }
+          if(targetDay == 1) {
+            return v.task_due_date_optional.getTime() < end.getTime()
+          }
+          return start.getTime() <= v.task_due_date_optional.getTime() && v.task_due_date_optional.getTime() < end.getTime();
+        })
+      },
+      formatEndDate: function(endDate) {
+        return formatDate('MM-DD', endDate);
+      },
+      pushOrUpdateTaskToModel: function(task) {
+        var isFind = false;
+        // 同じIDのタスクを探す
+        for(var i = 0; i < this.taskList.length; i++) {
+          if(this.taskList[i].task_id == task.task_id) {
+            isFind = true;
+            break;
+          }
+        }
+        if(isFind) {
+          model.taskList.splice(i, 1, {
+            task_name: task.task_name,
+            task_id: task.task_id,
+            task_due_date_optional: task.task_due_date_optional,
+            task_completed_date_optional: task.task_completed_date_optional
+          });
+        } else {
+          model.taskList.push(task);
+        }
+      },
+      done: function(task) {
+        var self = this;
+        task.task_completed_date_optional = new Date();// とりあえず
+        this.pushOrUpdateTaskToModel(task)
+        taskRepository.complete(
+          this, this.auth.token, task.task_id,
+          (data, status, request) => {
+            console.log(data.detail);
+            var updatedTask = data.detail.map(convertStringDateToDate)[0];
+            this.pushOrUpdateTaskToModel(updatedTask);
+          },
+          function (data, status, request) {
+            //GETメソッドが失敗した場合の処理
+            console.log(data);
+            // alert(JSON.stringify(data, null, '  '))
+        })
+      },
+      taskDelete: function(task) {
+        for(var i = 0; i < this.taskList.length; i++) {
+          if(this.taskList[i].task_id == task.task_id) {
+            this.taskList.splice(i, 1);
+            return;
+          }
+        }
+      },
+      moveToNextDay: function(task) {
+        task.task_due_date_optional = new Date(task.task_due_date_optional.getTime() + 24 * 60 * 60 * 1000);
+        this.pushOrUpdateTaskToModel(task);
+      },
+      sortedTaskList: function() {
+        var sortTask = (a, b) => {// 下ならプラスを返す
+          if(a.task_due_date_optional && !b.task_due_date_optional) {
+            return -1;
+          }
+          if(!a.task_due_date_optional && b.task_due_date_optional) {
+            return 1;
+          }
+          if(!a.task_due_date_optional && !b.task_due_date_optional) {
+            if(a.task_id < b.task_id) return -1;
+            if(a.task_id == b.task_id) return 0;
+            if(a.task_id > b.task_id) return 1;
+          }
+          return a.task_due_date_optional.getTime() - b.task_due_date_optional.getTime();
+        };
+
+        return this.taskList.filter((v) => {
+          if(!v.task_completed_date_optional) {
+            return true;
+          }
+          // 24時間以上過去は切る
+          return Date.now() - 24 * 60 * 60 * 1000 - v.task_completed_date_optional.getTime() < 0;
+        })
+        .sort(sortTask);
+      },
+    },
+    computed: {
+      today: () => formatedDay(0),
+      day2: () => formatedDay(1),
+      day3: () => formatedDay(2),
+      day4: () => formatedDay(3),
+      day5: () => formatedDay(4),
+      day6: () => formatedDay(5),
+      day7: () => formatedDay(6),
+      otherTaskList: function() {
+        var start = new Date(formatDate('YYYY-MM-DD 00:00:00', day(7)));
+        return this.sortedTaskList().filter(v => {
+          if(!v.task_due_date_optional) return false;
+          return start.getTime() <= v.task_due_date_optional.getTime();
+        })
+      },
+      backlogTaskList: function() {
+        return this.taskList.filter(v => !v.task_due_date_optional)
+      },
+    },
+    created: function() {
+      console.log("created main");
+
+      taskRepository.getTaskList(this, this.auth.token,
+        function (data, status, request) {
+          model.taskList = data.map(convertStringDateToDate);
+        },
+        function (data, status, request) {
+          //GETメソッドが失敗した場合の処理
+          console.log(data);
+      })
+    }
+})
+
+
+// router は、レンダリングするために1つの root コンポーネントが必要です
+// デモ目的向けで、app テンプレートとして HTML を使用しているため、空を使用します
+var App = Vue.extend({})
+
+// router インスタンスを作成。
+// ここでは追加的なオプションで渡すことができますが、今はシンプルに保っています
+var router = new VueRouter()
+router.map({
+  '/': {
+    component: First
+  },
+    '/main': {
+        component: Main
+    }
+})
+router.start(App, '#app')
+
+
+</script>
