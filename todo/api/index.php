@@ -2,9 +2,16 @@
 require_once 'index_require.php';
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Silex\Provider\SessionServiceProvider;
+use Task\AuthRepository;
 use Task\TaskRepository;
 
 $app = new Silex\Application();
+
+$sessionConfig = [
+  'cookie_lifetime' => 30 * 24 * 60 * 60,//one month
+];
+$app->register(new SessionServiceProvider(new NativeSessionStorage($sessionConfig)));
 $app['debug'] = true;
 
 $app->get('/', function() {
@@ -20,13 +27,18 @@ function convertDateOptional($stringDate = null) {
   return $stringDate != null && strlen($stringDate) > 0 ? $stringDate : null;
 }
 
+function getTokenFromSession() {
+  global $app;
+  return $app['session']->get('token');
+}
+
 $apis = [
   get(
     'タスク取得',
     '/tasks',
-    ['token'],
+    [],
     function($params, $request) {
-      $taskRepository = new TaskRepository($params['token']);
+      $taskRepository = new TaskRepository(getTokenFromSession());
       return createOkResult($taskRepository->getRecentTaskList()->toArray());
     }
   ),
@@ -34,9 +46,9 @@ $apis = [
   get(
     'タスク追加',
     '/tasks/add',
-    ['token', 'task_name', 'task_due_date_optional'],
+    ['task_name', 'task_due_date_optional'],
     function($params, $request) {
-      $taskRepository = new TaskRepository($params['token']);
+      $taskRepository = new TaskRepository(getTokenFromSession());
       return createOkResult($taskRepository->addTask($params['task_name'], convertDateOptional($params['task_due_date_optional']))->toArray());
     }
   ),
@@ -46,7 +58,7 @@ $apis = [
     '/tasks/complete',
     ['token', 'task_id'],
     function($params, $request) {
-      $taskRepository = new TaskRepository($params['token']);
+      $taskRepository = new TaskRepository(getTokenFromSession());
       return createOkResult($taskRepository->complete($params['task_id'])->toArray());
     }
   ),
@@ -54,7 +66,7 @@ $apis = [
   get(
     'タスク削除',
     '/tasks/delete',
-    ['token', 'task_id'],
+    ['task_id'],
     function($params, $request) {
       $taskRepository = new TaskRepository($params['token']);
       return createOkResult($taskRepository->delete($params['task_id'])->toArray());
@@ -64,14 +76,72 @@ $apis = [
   get(
     'タスク更新',
     '/tasks/update',
-    ['token', 'task_id', 'task_name', 'task_due_date_optional'],
+    ['task_id', 'task_name', 'task_due_date_optional'],
     function($params, $request) {
-      $taskRepository = new TaskRepository($params['token']);
+      $taskRepository = new TaskRepository(getTokenFromSession());
       return createOkResult($taskRepository->update(
         $params['task_id'],
         $params['task_name'],
         convertDateOptional($params['task_due_date_optional'])
       )->toArray());
+    }
+  ),
+
+  get(
+    '認証URL取得',
+    '/auth/geturl',
+    [],
+    function($params, $request) use($app) {
+      $authRepository = new AuthRepository();
+      $frob = $authRepository->getFrob();
+      $url = $authRepository->createAuthUrl($frob);
+      $app['session']->set('frob', $frob);
+      // return createOkResult(['url' => $url]);
+      return $url;
+    }
+  ),
+
+  get(
+    'トークン取得',
+    '/auth/settoken',
+    [],
+    function($params, $request) use($app) {
+      $authRepository = new AuthRepository();
+      $frob = $app['session']->get('frob');
+      $result = $authRepository->getToken($frob)->toArray();
+      var_dump($result);
+      $token = $result['token'];
+      $app['session']->set('token', $token);
+      $app['session']->set('user', $result['user']);
+      var_dump($token);
+      return createOkResult($result);
+    }
+  ),
+
+  get(
+    'ユーザ情報取得(要auth)',
+    '/user',
+    [],
+    function($params, $request) use($app) {
+      return createOkResult($app['session']->get('user'));
+    }
+  ),
+
+  get(
+    'セッションテスト',
+    '/session',
+    [],
+    function() {
+      global $app;
+      $session = $app['session'];
+      var_dump($session);
+      $count = $app['session']->get('count');
+      if($count == null) {
+        $count = 0;
+      }
+      $count++;
+      $app['session']->set('count', $count);
+      return $count;
     }
   )
 ];

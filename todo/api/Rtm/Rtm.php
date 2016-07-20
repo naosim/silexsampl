@@ -363,7 +363,7 @@ class Rtm
      * @param  string $perms Permission you need (read, write or delete)
      * @return string
      */
-    public function getAuthUrl($perms = self::AUTH_TYPE_READ)
+    public function getAuthUrl($frob, $perms = self::AUTH_TYPE_DELETE)
     {
 //         if (!$this->frob) {
 //             $this->auth->getFrob();
@@ -371,8 +371,9 @@ class Rtm
 
         $request = new Request;
         $request->setParameter('api_key', $this->getApiKey());
-        //$request->setParameter('frob', $this->getFrob());
+        $request->setParameter('frob', $frob);
         $request->setParameter('perms', $perms);
+        $request->setParameter('v', 'v2');
         $request->sign($this->getSecret());
 
         return $request->getAuthUrl();
