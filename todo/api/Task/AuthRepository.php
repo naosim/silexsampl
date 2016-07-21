@@ -4,32 +4,47 @@ namespace Task;
 use Rtm\Rtm;
 use RtmConfig\RtmConfig;
 use lib\JsonArray;
+// use Task\InvalidTokenException;
+
 class AuthRepository {
   private $rtm;
-  public function __construct() {
+  private $app;
+  public function __construct($app) {
     $rtmConfig = new RtmConfig();
     $rtm = new Rtm;
     $rtm->setApiKey($rtmConfig->getApiKey());
     $rtm->setSecret($rtmConfig->getSecret());
 
     $this->rtm = $rtm;
+    $this->app = $app;
   }
 
   private function getAuthService() {
     return $this->rtm->getService(Rtm::SERVICE_AUTH);
   }
 
-  public function getFrob() {
-    $result = $this->getAuthService()->getFrob();
+  public function getToken() {
+    $token = $this->app['session']->get('token');
+    if($token == null) {
+      throw new InvalidTokenException();
+    }
+    return $token;
+  }
+
+  public function setupToken() {
+    $frob = $this->app['session']->get('frob');
+    $result = $this->getAuthService()->getToken($frob)->toArray();
+    var_dump($result);
+    $token = $result['token'];
+    $this->app['session']->set('token', $token);
+    $this->app['session']->set('user', $result['user']);
+    $this->app['session']->set('frob', null);// clear
     return $result;
   }
 
-  public function getToken($frob) {
-    $result = $this->getAuthService()->getToken($frob);
-    return $result;
-  }
-
-  public function createAuthUrl($frob) {
+  public function createAuthUrl() {
+    $frob = $this->getAuthService()->getFrob();
+    $this->app['session']->set('frob', $frob);
     return $this->rtm->getAuthUrl($frob);
   }
 

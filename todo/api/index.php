@@ -27,9 +27,19 @@ function convertDateOptional($stringDate = null) {
   return $stringDate != null && strlen($stringDate) > 0 ? $stringDate : null;
 }
 
-function getTokenFromSession() {
+// function getTokenFromSession() {
+//   global $app;
+//   return $app['session']->get('token');
+// }
+
+function createAuthRepository() {
   global $app;
-  return $app['session']->get('token');
+  return new AuthRepository($app);
+}
+
+function createTaskRepository() {
+  $token = createAuthRepository()->getToken();
+  return new TaskRepository($token);
 }
 
 $apis = [
@@ -38,7 +48,7 @@ $apis = [
     '/tasks',
     [],
     function($params, $request) {
-      $taskRepository = new TaskRepository(getTokenFromSession());
+      $taskRepository = createTaskRepository();
       return createOkResult($taskRepository->getRecentTaskList()->toArray());
     }
   ),
@@ -48,7 +58,7 @@ $apis = [
     '/tasks/add',
     ['task_name', 'task_due_date_optional'],
     function($params, $request) {
-      $taskRepository = new TaskRepository(getTokenFromSession());
+      $taskRepository = createTaskRepository();
       return createOkResult($taskRepository->addTask($params['task_name'], convertDateOptional($params['task_due_date_optional']))->toArray());
     }
   ),
@@ -58,7 +68,7 @@ $apis = [
     '/tasks/complete',
     ['token', 'task_id'],
     function($params, $request) {
-      $taskRepository = new TaskRepository(getTokenFromSession());
+      $taskRepository = createTaskRepository();
       return createOkResult($taskRepository->complete($params['task_id'])->toArray());
     }
   ),
@@ -68,7 +78,7 @@ $apis = [
     '/tasks/delete',
     ['task_id'],
     function($params, $request) {
-      $taskRepository = new TaskRepository($params['token']);
+      $taskRepository = createTaskRepository();
       return createOkResult($taskRepository->delete($params['task_id'])->toArray());
     }
   ),
@@ -78,7 +88,7 @@ $apis = [
     '/tasks/update',
     ['task_id', 'task_name', 'task_due_date_optional'],
     function($params, $request) {
-      $taskRepository = new TaskRepository(getTokenFromSession());
+      $taskRepository = createTaskRepository();
       return createOkResult($taskRepository->update(
         $params['task_id'],
         $params['task_name'],
@@ -92,10 +102,7 @@ $apis = [
     '/auth/geturl',
     [],
     function($params, $request) use($app) {
-      $authRepository = new AuthRepository();
-      $frob = $authRepository->getFrob();
-      $url = $authRepository->createAuthUrl($frob);
-      $app['session']->set('frob', $frob);
+      $url = createAuthRepository()->createAuthUrl();
       // return createOkResult(['url' => $url]);
       return $url;
     }
@@ -106,14 +113,8 @@ $apis = [
     '/auth/settoken',
     [],
     function($params, $request) use($app) {
-      $authRepository = new AuthRepository();
-      $frob = $app['session']->get('frob');
-      $result = $authRepository->getToken($frob)->toArray();
-      var_dump($result);
-      $token = $result['token'];
-      $app['session']->set('token', $token);
-      $app['session']->set('user', $result['user']);
-      var_dump($token);
+      $authRepository = createAuthRepository();
+      $result = $authRepository->setupToken();
       return createOkResult($result);
     }
   ),
@@ -159,28 +160,9 @@ $app->get('/apis', function(Request $request) use($apis) {
   return $html;
 });
 
-$app->get('/hello/{name}', function($name, Request $request) use($app) {
-    $arr = [
-      'name' => $app->escape($name),
-      'k1' => 10,
-      'k2' => 15,
-      'k3' => 20,
-    ];
-    return json_encode($arr);
-});
-
-$app->get('/public/{path}', function ($path) use ($app) {
-  $filePath = './public/' . $path;
-    if (!file_exists($filePath)) {
-        $app->abort(404);
-    }
-
-    return $app->sendFile($filePath);
-});
-
 $app->error(function (\Exception $e, $code) {
   if(strpos($e -> getMessage(), 'Invalid auth token') !== false) {
-    return new Response("Invalid auth token", 400);
+    return new Response(createNgResult(400, 'Invalid auth token'), 400);
   }
   return new Response($e -> getMessage() . $code, 500);
 });
@@ -210,11 +192,17 @@ function getParam($request, $key) {
 function createOkResult($obj) {
   return createResult(200, 'ok', $obj);
 }
-function createResult($code, $status, $obj) {
+
+function createNgResult($httpStatusCode, $errorMessage, $obj = array()) {
+  return createResult($httpStatusCode, 'ng', $obj, $errorMessage);
+}
+
+function createResult($code, $status, $obj = array(), $errorMessage = null) {
   return json_encode([
     'header' => [
       'code' => $code,
       'status' => $status,
+      'error_message' => $errorMessage,
     ],
     'body' => $obj
   ]);

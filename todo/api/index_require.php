@@ -21,6 +21,7 @@ require_once 'lib/JsonArray.php';
 require_once 'Task/AuthRepository.php';
 require_once 'Task/Task.php';
 require_once 'Task/TaskRepository.php';
+require_once 'Task/InvalidTokenException.php';
 
 
 require_once 'RtmConfig/RtmConfig.php';
