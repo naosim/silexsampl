@@ -38,104 +38,128 @@ input[type=text].form-control {
 </div>
 
 <template id="login-template">
-  <a v-link="{ path: '/foo' }">Login</a>
+  <a href="{{authUrl}}" v-show="authUrl" target="_blank">Login</a>
+  <button v-on:click="setupToken()"  v-show="authUrl">Start</button>
 </template>
 
 <template id="tasklist-template">
-  <h3>今日 {{today}} <input class="form-control" type="text" v-model="newTaskNameOfDay[1]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(1)">add</button></h3>
-  <ul>
-    <li class="task" v-for="task in taskListOfDay(1)">
-      <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
-    </li>
-  </ul>
+  <div v-show="taskList.length">
+    <h3>今日 {{today}} <input class="form-control" type="text" v-model="newTaskNameOfDay[1]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(1)">add</button></h3>
+    <ul>
+      <li class="task" v-for="task in taskListOfDay(1)">
+        <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
+      </li>
+    </ul>
 
-  <hr>
-  <h3>明日 {{day2}} <input class="form-control" type="text" v-model="newTaskNameOfDay[2]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(2)">add</button></h3>
-  <ul>
-    <li class="task" v-for="task in taskListOfDay(2)">
-      <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
-    </li>
-  </ul>
+    <hr>
+    <h3>明日 {{day2}} <input class="form-control" type="text" v-model="newTaskNameOfDay[2]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(2)">add</button></h3>
+    <ul>
+      <li class="task" v-for="task in taskListOfDay(2)">
+        <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
+      </li>
+    </ul>
 
-  <hr>
-  <h3>明後日 {{day3}} <input class="form-control" type="text" v-model="newTaskNameOfDay[3]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(3)">add</button></h3>
-  <ul>
-    <li class="task" v-for="task in taskListOfDay(3)">
-      <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
-    </li>
-  </ul>
+    <hr>
+    <h3>明後日 {{day3}} <input class="form-control" type="text" v-model="newTaskNameOfDay[3]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(3)">add</button></h3>
+    <ul>
+      <li class="task" v-for="task in taskListOfDay(3)">
+        <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
+      </li>
+    </ul>
 
-  <hr>
-  <h3>3日後 {{day4}} <input class="form-control" type="text" v-model="newTaskNameOfDay[4]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(4)">add</button></h3>
-  <ul>
-    <li class="task" v-for="task in taskListOfDay(4)">
-      <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
-    </li>
-  </ul>
+    <hr>
+    <h3>3日後 {{day4}} <input class="form-control" type="text" v-model="newTaskNameOfDay[4]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(4)">add</button></h3>
+    <ul>
+      <li class="task" v-for="task in taskListOfDay(4)">
+        <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
+      </li>
+    </ul>
 
-  <hr>
-  <h3>4日後 {{day5}} <input class="form-control" type="text" v-model="newTaskNameOfDay[5]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(5)">add</button></h3>
-  <ul>
-    <li class="task" v-for="task in taskListOfDay(5)">
-      <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
-    </li>
-  </ul>
+    <hr>
+    <h3>4日後 {{day5}} <input class="form-control" type="text" v-model="newTaskNameOfDay[5]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(5)">add</button></h3>
+    <ul>
+      <li class="task" v-for="task in taskListOfDay(5)">
+        <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
+      </li>
+    </ul>
 
-  <hr>
-  <h3>5日後 {{day6}} <input class="form-control" type="text" v-model="newTaskNameOfDay[6]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(6)">add</button></h3>
-  <ul>
-    <li class="task" v-for="task in taskListOfDay(6)">
-      <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
-    </li>
-  </ul>
+    <hr>
+    <h3>5日後 {{day6}} <input class="form-control" type="text" v-model="newTaskNameOfDay[6]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(6)">add</button></h3>
+    <ul>
+      <li class="task" v-for="task in taskListOfDay(6)">
+        <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
+      </li>
+    </ul>
 
-  <hr>
-  <h3>6日後 {{day7}} <input class="form-control" type="text" v-model="newTaskNameOfDay[7]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(7)">add</button></h3>
-  <ul>
-    <li class="task" v-for="task in taskListOfDay(7)">
-      <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
-    </li>
-  </ul>
+    <hr>
+    <h3>6日後 {{day7}} <input class="form-control" type="text" v-model="newTaskNameOfDay[7]" /><button class="btn btn-success" v-on:click="addTodaysNewTask(7)">add</button></h3>
+    <ul>
+      <li class="task" v-for="task in taskListOfDay(7)">
+        <div class="task-name" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">{{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span></div><div class="task-edit-buttons"><button class="btn btn-success" v-on:click="done(task)">DONE</button> <button class="btn btn-success" v-on:click="moveToNextDay(task)">次の日へ移動</button> <button class="btn btn-error" v-on:click="taskDelete(task)">DELETE</button></div>
+      </li>
+    </ul>
 
-  <hr>
-  <h3>以降</h3>
-  <ul>
-    <li v-for="task in otherTaskList" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">
-      {{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span>
-    </li>
-  </ul>
+    <hr>
+    <h3>以降</h3>
+    <ul>
+      <li v-for="task in otherTaskList" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">
+        {{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span>
+      </li>
+    </ul>
 
-  <hr>
-  <h3>BACKLOG</h3>
-  <ul>
-    <li v-for="task in backlogTaskList" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">
-      {{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span> <button class="btn btn-success" v-on:click="done(task)">DONE</button>
-    </li>
-  </ul>
+    <hr>
+    <h3>BACKLOG</h3>
+    <ul>
+      <li v-for="task in backlogTaskList" style="{{task.task_completed_date_optional ? 'text-decoration: line-through;' : ''}}">
+        {{ task.task_name }} <span class="task-end-date">{{formatEndDate(task.task_due_date_optional)}}</span> <button class="btn btn-success" v-on:click="done(task)">DONE</button>
+      </li>
+    </ul>
+
+  </div>
 </template>
-
+<script type="text/javascript" src="js/cookie-monster.js"></script>
 <script src="https://cdn.jsdelivr.net/vue/1.0.26/vue.min.js"></script>
 <script src="https://cdn.jsdelivr.net/vue.router/0.7.10/vue-router.min.js"></script>
 <script src="https://cdn.jsdelivr.net/vue.resource/0.9.3/vue-resource.min.js"></script>
 <script src="js/lib.js"></script>
 <script src="js/TaskRepository.js"></script>
 <script>
+
 var serverResponseSample = [];
 var model = {
   isAuthed: true,
+  authUrl: null,
   taskList: [],
   newTaskNameOfDay: [null, '', '', '', '', '', '' ,''],
+};
 
-}
-
-
+var taskRepository = TaskRepository();
 
 var First = Vue.extend({
   template: '#login-template',
   data: () => model,
+  methods: {
+    setupToken: function() {
+      taskRepository.setupToken(this, ()=>{
+        this.authUrl = null;
+        router.go('/main');
+      }, ()=>{});
+    },
+  },
   created: function() {
+
     if(this.$data.isAuthed) {
-      router.go('/main');
+      console.log('go main');
+      setTimeout(() => router.go('/main'), 200);
+      return;
+    } else {
+      console.log('invalid token');
+      taskRepository.getAuthUrl(this, (data)=> {
+        this.authUrl = data.body;
+      },
+      (data)=>{
+
+      });
     }
   }
 })
@@ -146,7 +170,7 @@ var First = Vue.extend({
 
 
 
-var taskRepository = TaskRepository();
+
 
 var Main = Vue.extend({
     template: '#tasklist-template',
@@ -154,8 +178,7 @@ var Main = Vue.extend({
     watch: {
       'isAuthed': (val, oldVal) => {
         if(!val) {
-          console.log('invalid token');
-          router.go('/');
+          router.go('/login');
         }
       }
     },
@@ -280,14 +303,14 @@ var Main = Vue.extend({
       },
     },
     created: function() {
-      console.log("created main");
-
+      console.log("created main", this.isAuthed);
       taskRepository.getTaskList(this, null,
         (data) => model.taskList = data,
         function (data, status, request) {
           //GETメソッドが失敗した場合の処理
           console.log(data);
       })
+
     }
 })
 
@@ -300,7 +323,7 @@ var App = Vue.extend({})
 // ここでは追加的なオプションで渡すことができますが、今はシンプルに保っています
 var router = new VueRouter()
 router.map({
-  '/': {
+  '/login': {
     component: First
   },
     '/main': {
@@ -308,6 +331,6 @@ router.map({
     }
 })
 router.start(App, '#app')
-
+router.go('/main');
 
 </script>

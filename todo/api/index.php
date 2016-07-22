@@ -164,7 +164,7 @@ $app->error(function (\Exception $e, $code) {
   if(strpos($e -> getMessage(), 'Invalid auth token') !== false) {
     return new Response(createNgResult(400, 'Invalid auth token'), 400);
   }
-  return new Response($e -> getMessage() . $code, 500);
+  return new Response(createNgResult(400, $e->getMessage()), 400);
 });
 
 $app->run();

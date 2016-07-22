@@ -1,6 +1,17 @@
 var TaskRepository = function() {
   var urlbase = '..';
 
+  var isAuthedEstimated = function() {
+    return monster.get('PHPSESSID') != null;
+  };
+
+  var clearAuth = function(vue) {
+    monster.remove('PHPSESSID');
+    model.isAuthed = false;
+    // Vue.set(model, 'isAuthed', false);
+    // vue.clearAuth();
+  }
+
   var handleResponse = (data, success, error) => {
     if(!data) {
       error(null);
@@ -11,7 +22,7 @@ var TaskRepository = function() {
     if(response.header.status == 'ok') {
       success(response.body);
     } else {
-      model.isAuthed = false;
+      clearAuth();
       error(response);
     }
   }
@@ -26,7 +37,26 @@ var TaskRepository = function() {
     return v;
   };
 
+  var getAuthUrl = function(vue, success, error) {
+    vue.$http.get(`${urlbase}/auth/geturl`).then(
+      success, error
+    )
+  };
+
+  var setupToken = function(vue, success, error) {
+    vue.$http.get(`${urlbase}/auth/settoken`).then(
+      (data)=> {
+        model.isAuthed = true;
+        success(data);
+      }, error
+    )
+  };
+
   var getTaskList = function(vue, token, success, error) {
+    if(!isAuthedEstimated()) {
+      clearAuth();
+      return;
+    }
     vue.$http.get(`${urlbase}/tasks`).then(
       (data, status, request) => handleResponse(data, (data) => success(data.map(convertStringDateToDate)), error),
       (data, status, request) => handleResponse(data, null, error)
@@ -107,6 +137,8 @@ var TaskRepository = function() {
   }
 
   return {
+    getAuthUrl: getAuthUrl,
+    setupToken: setupToken,
     getTaskList: getTaskList,
     addTask: addTask,
     complete: complete,

@@ -25,6 +25,10 @@ class AuthRepository {
 
   public function getToken() {
     $token = $this->app['session']->get('token');
+    if($token == null && $this->app['session']->get('frob') != null) {
+      $this->setupToken();
+      $token = $this->app['session']->get('token');
+    }
     if($token == null) {
       throw new InvalidTokenException();
     }
@@ -34,7 +38,6 @@ class AuthRepository {
   public function setupToken() {
     $frob = $this->app['session']->get('frob');
     $result = $this->getAuthService()->getToken($frob)->toArray();
-    var_dump($result);
     $token = $result['token'];
     $this->app['session']->set('token', $token);
     $this->app['session']->set('user', $result['user']);
