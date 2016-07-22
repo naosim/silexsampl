@@ -18,19 +18,9 @@ $app->get('/', function() {
     return 'hello';
 });
 
-// $app->get('/tasks', function(Request $request) {
-//   $taskRepository = new TaskRepository(getParam($request, 'token'));
-//   return $taskRepository->getRecentTaskList()->toJson();
-// });
-
 function convertDateOptional($stringDate = null) {
   return $stringDate != null && strlen($stringDate) > 0 ? $stringDate : null;
 }
-
-// function getTokenFromSession() {
-//   global $app;
-//   return $app['session']->get('token');
-// }
 
 function createAuthRepository() {
   global $app;

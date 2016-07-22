@@ -28,18 +28,12 @@ input[type=text].form-control {
 
 <div id="app">
   <h1>My TODO</h1>
-  <p>
-    <!-- ナビゲーション向けに v-link ディレクティブを使用 -->
-    <a v-link="{ path: '/' }">Go to First</a>
-    <a v-link="{ path: '/bar' }">Go to Bar</a>
-  </p>
-  <!-- route outlet -->
   <router-view></router-view>
 </div>
 
 <template id="login-template">
-  <a href="{{authUrl}}" v-show="authUrl" target="_blank">Login</a>
-  <button v-on:click="setupToken()"  v-show="authUrl">Start</button>
+  <a href="{{authUrl}}" v-show="authUrl" target="_blank" class="btn btn-success">ログイン</a>
+  <button v-on:click="setupToken()"  v-show="authUrl" class="btn btn-success" style="font-weight: bold">スタート</button>
 </template>
 
 <template id="tasklist-template">
