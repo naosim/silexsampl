@@ -1,4 +1,4 @@
-var TaskRepository = function() {
+var TaskRepository = function(_vue) {
   var urlbase = '..';
 
   var isAuthedEstimated = function() {
@@ -8,11 +8,16 @@ var TaskRepository = function() {
   var clearAuth = function(vue) {
     monster.remove('PHPSESSID');
     model.isAuthed = false;
+    setTimeout(() => router.go('/login'), 200);
     // Vue.set(model, 'isAuthed', false);
     // vue.clearAuth();
   }
 
   var handleResponse = (data, success, error) => {
+    if(_vue.$data.loadingCount > 0) {
+      _vue.$data.loadingCount--;
+    }
+
     if(!data) {
       error(null);
     }
@@ -37,14 +42,14 @@ var TaskRepository = function() {
     return v;
   };
 
-  var getAuthUrl = function(vue, success, error) {
-    vue.$http.get(`${urlbase}/auth/geturl`).then(
+  var getAuthUrl = function(success, error) {
+    _vue.$http.get(`${urlbase}/auth/geturl`).then(
       success, error
     )
   };
 
-  var setupToken = function(vue, success, error) {
-    vue.$http.get(`${urlbase}/auth/settoken`).then(
+  var setupToken = function(success, error) {
+    _vue.$http.get(`${urlbase}/auth/settoken`).then(
       (data)=> {
         model.isAuthed = true;
         success(data);
@@ -52,42 +57,47 @@ var TaskRepository = function() {
     )
   };
 
-  var getTaskList = function(vue, token, success, error) {
+  var getTaskList = function(success, error) {
     if(!isAuthedEstimated()) {
       clearAuth();
       return;
     }
-    vue.$http.get(`${urlbase}/tasks`).then(
+    _vue.$data.loadingCount++;
+    _vue.$http.get(`${urlbase}/tasks`).then(
       (data, status, request) => handleResponse(data, (data) => success(data.map(convertStringDateToDate)), error),
       (data, status, request) => handleResponse(data, null, error)
     );
   };
 
-  var addTask = function(vue, token, name, dueDateOptional, success, error) {
-    vue.$http.get(`${urlbase}/tasks/add?task_name=${name}&task_due_date_optional=${dueDateOptional}`).then(
+  var addTask = function(name, dueDateOptional, success, error) {
+    _vue.$data.loadingCount++;
+    _vue.$http.get(`${urlbase}/tasks/add?task_name=${name}&task_due_date_optional=${dueDateOptional}`).then(
       (data, status, request) => handleResponse(data, (data) => success(convertStringDateToDate(data)), error),
       (data, status, request) => handleResponse(data, null, error)
     );
   };
 
-  var updateTask = function(vue, token, taskId, name, dueDateOptional, success, error) {
-    vue.$http.get(`${urlbase}/tasks/update?task_id=${taskId}&task_name=${name}&task_due_date_optional=${dueDateOptional}`).then(
+  var updateTask = function(taskId, name, dueDateOptional, success, error) {
+    _vue.$data.loadingCount++;
+    _vue.$http.get(`${urlbase}/tasks/update?task_id=${taskId}&task_name=${name}&task_due_date_optional=${dueDateOptional}`).then(
       (data, status, request) => handleResponse(data, (data) => success(convertStringDateToDate(data)), error),
       (data, status, request) => handleResponse(data, null, error)
     );
   };
 
-  var complete = function(vue, token, taskId, success, error) {
+  var complete = function(taskId, success, error) {
     console.log(taskId);
-    vue.$http.get(`${urlbase}/tasks/complete?task_id=${taskId}`).then(
+    _vue.$data.loadingCount++;
+    _vue.$http.get(`${urlbase}/tasks/complete?task_id=${taskId}`).then(
       (data, status, request) => handleResponse(data, (data) => success(convertStringDateToDate(data)), error),
       (data, status, request) => handleResponse(data, null, error)
     );
   }
 
-  var deleteTask = function(vue, token, taskId, success, error) {
+  var deleteTask = function(taskId, success, error) {
     console.log(taskId);
-    vue.$http.get(`${urlbase}/tasks/delete?task_id=${taskId}`).then(
+    _vue.$data.loadingCount++;
+    _vue.$http.get(`${urlbase}/tasks/delete?task_id=${taskId}`).then(
       (data, status, request) => handleResponse(data, (data) => success(convertStringDateToDate(data)), error),
       (data, status, request) => handleResponse(data, success, error)
     );

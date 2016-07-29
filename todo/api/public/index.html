@@ -28,6 +28,7 @@ input[type=text].form-control {
 
 <div id="app">
   <h1>My TODO</h1>
+  <div id="loader" v-show="loadingCount > 0">ローディング</div>
   <router-view></router-view>
 </div>
 
@@ -127,14 +128,22 @@ var model = {
   newTaskNameOfDay: [null, '', '', '', '', '', '' ,''],
 };
 
-var taskRepository = TaskRepository();
+var loaderVue = new Vue({
+  el: '#loader',
+  data: {
+    loadingCount: 0,
+    message: 'Hello Vue.js!'
+  }
+});
+
+var taskRepository = TaskRepository(loaderVue);
 
 var First = Vue.extend({
   template: '#login-template',
   data: () => model,
   methods: {
     setupToken: function() {
-      taskRepository.setupToken(this, ()=>{
+      taskRepository.setupToken(()=>{
         this.authUrl = null;
         router.go('/main');
       }, ()=>{});
@@ -148,7 +157,7 @@ var First = Vue.extend({
       return;
     } else {
       console.log('invalid token');
-      taskRepository.getAuthUrl(this, (data)=> {
+      taskRepository.getAuthUrl((data)=> {
         this.authUrl = data.body;
       },
       (data)=>{
@@ -169,21 +178,12 @@ var First = Vue.extend({
 var Main = Vue.extend({
     template: '#tasklist-template',
     data: () => model,
-    watch: {
-      'isAuthed': (val, oldVal) => {
-        if(!val) {
-          router.go('/login');
-        }
-      }
-    },
     methods: {
       addNewTaskCommon: function(taskName, formatedEndDate, success) {
         if(taskName.length == 0) {
           return;
         }
         taskRepository.addTask(
-          this,
-          null,
           taskName,
           formatedEndDate,
           (data) => {
@@ -240,7 +240,7 @@ var Main = Vue.extend({
         task.task_completed_date_optional = new Date();// とりあえず
         this.pushOrUpdateTaskToModel(task)
         taskRepository.complete(
-          this, null, task.task_id,
+          task.task_id,
           (data) => this.pushOrUpdateTaskToModel(data),
           (data) => console.error(data)
         )
@@ -253,7 +253,7 @@ var Main = Vue.extend({
           }
         }
 
-        taskRepository.deleteTask(this, null, task.task_id,
+        taskRepository.deleteTask(task.task_id,
           (data) => {},
           (data) => {
             console.error(data);
@@ -265,7 +265,7 @@ var Main = Vue.extend({
       moveToNextDay: function(task) {
         task.task_due_date_optional = new Date(task.task_due_date_optional.getTime() + 24 * 60 * 60 * 1000);
         this.pushOrUpdateTaskToModel(task);
-        taskRepository.updateTask(this, null, task.task_id, task.task_name,
+        taskRepository.updateTask(task.task_id, task.task_name,
           task.task_due_date_optional ? formatDate('YYYY-MM-DD', task.task_due_date_optional) : "",
           (data) => {},
           (data) => {
@@ -298,7 +298,7 @@ var Main = Vue.extend({
     },
     created: function() {
       console.log("created main", this.isAuthed);
-      taskRepository.getTaskList(this, null,
+      taskRepository.getTaskList(
         (data) => model.taskList = data,
         function (data, status, request) {
           //GETメソッドが失敗した場合の処理
