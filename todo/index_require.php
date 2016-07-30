@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__.'/../../vendor/autoload.php';
+require_once __DIR__.'/../vendor/autoload.php';
 require_once 'Rtm/Rtm.php';
 require_once 'Rtm/DataContainer.php';
 require_once 'Rtm/Toolkit.php';

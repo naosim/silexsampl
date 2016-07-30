@@ -14,7 +14,7 @@ $sessionConfig = [
 $app->register(new SessionServiceProvider(new NativeSessionStorage($sessionConfig)));
 $app['debug'] = true;
 
-$app->get('/api/', function() {
+$app->get('/api', function() {
     return 'hello';
 });
 
