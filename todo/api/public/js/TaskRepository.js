@@ -1,5 +1,5 @@
 var TaskRepository = function(_vue) {
-  var urlbase = '..';
+  var urlbase = '../api';
 
   var isAuthedEstimated = function() {
     return monster.get('PHPSESSID') != null;

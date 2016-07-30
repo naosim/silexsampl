@@ -14,7 +14,7 @@ $sessionConfig = [
 $app->register(new SessionServiceProvider(new NativeSessionStorage($sessionConfig)));
 $app['debug'] = true;
 
-$app->get('/', function() {
+$app->get('/api/', function() {
     return 'hello';
 });
 
@@ -35,7 +35,7 @@ function createTaskRepository() {
 $apis = [
   get(
     'タスク取得',
-    '/tasks',
+    '/api/tasks',
     [],
     function($params, $request) {
       $taskRepository = createTaskRepository();
@@ -45,7 +45,7 @@ $apis = [
 
   post(
     'タスク追加',
-    '/tasks/add',
+    '/api/tasks/add',
     ['task_name', 'task_due_date_optional'],
     function($params, $request) {
       $taskRepository = createTaskRepository();
@@ -55,7 +55,7 @@ $apis = [
 
   put(
     'タスク完了',
-    '/tasks/{task_id}/complete',
+    '/api/tasks/{task_id}/complete',
     ['task_id'],
     function($params, $request) {
       $taskRepository = createTaskRepository();
@@ -65,7 +65,7 @@ $apis = [
 
   deleteRequest(
     'タスク削除',
-    '/tasks/{task_id}/delete',
+    '/api/tasks/{task_id}/delete',
     ['task_id'],
     function($params, $request) {
       $taskRepository = createTaskRepository();
@@ -76,7 +76,7 @@ $apis = [
 
   put(
     'タスク更新',
-    '/tasks/{task_id}/update',
+    '/api/tasks/{task_id}/update',
     ['task_id', 'task_name', 'task_due_date_optional'],
     function($params, $request) {
       $taskRepository = createTaskRepository();
@@ -90,7 +90,7 @@ $apis = [
 
   get(
     '認証URL取得',
-    '/auth/geturl',
+    '/api/auth/geturl',
     [],
     function($params, $request) use($app) {
       $url = createAuthRepository()->createAuthUrl();
@@ -101,7 +101,7 @@ $apis = [
 
   get(
     'トークン取得',
-    '/auth/settoken',
+    '/api/auth/settoken',
     [],
     function($params, $request) use($app) {
       $authRepository = createAuthRepository();
@@ -112,7 +112,7 @@ $apis = [
 
   get(
     'ユーザ情報取得(要auth)',
-    '/user',
+    '/api/user',
     [],
     function($params, $request) use($app) {
       return createOkResult($app['session']->get('user'));
@@ -121,7 +121,7 @@ $apis = [
 
   get(
     'セッションテスト',
-    '/session',
+    '/api/session',
     [],
     function() {
       global $app;
@@ -139,7 +139,7 @@ $apis = [
 
   get(
     'test',
-    '/hoge/{id}',
+    '/apis/{id}',
     ['id'],
     function($params, $request) {
       return json_encode($params);
@@ -148,16 +148,7 @@ $apis = [
 ];
 
 $app->get('/apis', function(Request $request) use($apis) {
-  $html = '<h1>API一覧</h1>';
-  foreach($apis as $apiIndex => $api) {
-    $input = '';
-    foreach($api['params'] as $i => $value) {
-      $input .= sprintf('%s: <input type="text" name="%s" /></br>', $value, $value);
-    }
-    $format = '<h2>%s</h2><div>%s</div><form action=".%s" method="get">%s<input type="submit" /></form><hr/>';
-    $html .= sprintf($format, $api['apiName'], $api['path'], $api['path'], $input);
-  }
-  return $html;
+  return json_encode($apis);
 });
 
 $app->error(function (\Exception $e, $code) {
