@@ -17,6 +17,7 @@ require_once 'Rtm/Service/Timelines.php';
 
 require_once 'lib/ToJson.php';
 require_once 'lib/JsonArray.php';
+require_once 'lib/apihelper.php';
 
 require_once 'Task/AuthRepository.php';
 require_once 'Task/Task.php';
