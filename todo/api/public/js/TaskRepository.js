@@ -71,7 +71,11 @@ var TaskRepository = function(_vue) {
 
   var addTask = function(name, dueDateOptional, success, error) {
     _vue.$data.loadingCount++;
-    _vue.$http.get(`${urlbase}/tasks/add?task_name=${name}&task_due_date_optional=${dueDateOptional}`).then(
+    var body = {
+      task_name: name,
+      task_due_date_optional: dueDateOptional
+    };
+    _vue.$http.post(`${urlbase}/tasks/add`, body).then(
       (data, status, request) => handleResponse(data, (data) => success(convertStringDateToDate(data)), error),
       (data, status, request) => handleResponse(data, null, error)
     );
@@ -79,7 +83,11 @@ var TaskRepository = function(_vue) {
 
   var updateTask = function(taskId, name, dueDateOptional, success, error) {
     _vue.$data.loadingCount++;
-    _vue.$http.get(`${urlbase}/tasks/update?task_id=${taskId}&task_name=${name}&task_due_date_optional=${dueDateOptional}`).then(
+    var body = {
+      task_name: name,
+      task_due_date_optional: dueDateOptional,
+    };
+    _vue.$http.put(`${urlbase}/tasks/${taskId}/update`, body).then(
       (data, status, request) => handleResponse(data, (data) => success(convertStringDateToDate(data)), error),
       (data, status, request) => handleResponse(data, null, error)
     );
@@ -88,7 +96,7 @@ var TaskRepository = function(_vue) {
   var complete = function(taskId, success, error) {
     console.log(taskId);
     _vue.$data.loadingCount++;
-    _vue.$http.get(`${urlbase}/tasks/complete?task_id=${taskId}`).then(
+    _vue.$http.put(`${urlbase}/tasks/${taskId}/complete`).then(
       (data, status, request) => handleResponse(data, (data) => success(convertStringDateToDate(data)), error),
       (data, status, request) => handleResponse(data, null, error)
     );
@@ -97,7 +105,7 @@ var TaskRepository = function(_vue) {
   var deleteTask = function(taskId, success, error) {
     console.log(taskId);
     _vue.$data.loadingCount++;
-    _vue.$http.get(`${urlbase}/tasks/delete?task_id=${taskId}`).then(
+    _vue.$http.delete(`${urlbase}/tasks/${taskId}/delete`).then(
       (data, status, request) => handleResponse(data, (data) => success(convertStringDateToDate(data)), error),
       (data, status, request) => handleResponse(data, success, error)
     );

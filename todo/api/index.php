@@ -43,7 +43,7 @@ $apis = [
     }
   ),
 
-  get(
+  post(
     'タスク追加',
     '/tasks/add',
     ['task_name', 'task_due_date_optional'],
@@ -53,19 +53,19 @@ $apis = [
     }
   ),
 
-  get(
+  put(
     'タスク完了',
-    '/tasks/complete',
-    ['token', 'task_id'],
+    '/tasks/{task_id}/complete',
+    ['task_id'],
     function($params, $request) {
       $taskRepository = createTaskRepository();
       return createOkResult($taskRepository->complete($params['task_id'])->toArray());
     }
   ),
 
-  get(
+  deleteRequest(
     'タスク削除',
-    '/tasks/delete',
+    '/tasks/{task_id}/delete',
     ['task_id'],
     function($params, $request) {
       $taskRepository = createTaskRepository();
@@ -73,9 +73,10 @@ $apis = [
     }
   ),
 
-  get(
+
+  put(
     'タスク更新',
-    '/tasks/update',
+    '/tasks/{task_id}/update',
     ['task_id', 'task_name', 'task_due_date_optional'],
     function($params, $request) {
       $taskRepository = createTaskRepository();
@@ -134,7 +135,16 @@ $apis = [
       $app['session']->set('count', $count);
       return $count;
     }
-  )
+  ),
+
+  get(
+    'test',
+    '/hoge/{id}',
+    ['id'],
+    function($params, $request) {
+      return json_encode($params);
+    }
+),
 ];
 
 $app->get('/apis', function(Request $request) use($apis) {
@@ -164,7 +174,13 @@ function get($apiName, $path, $params, $actionWithParamsAndRequest) {
   $app->get($path, function(Request $request) use($params, $actionWithParamsAndRequest) {
     $p = array();
     foreach($params as $index => $value) {
-      $p[$value] = $request->query->get($value);
+      $v = null;
+      $v = $request->attributes->get($value);
+      if($v == null) {
+        $v = $request->query->get($value);
+      }
+
+      $p[$value] = $v;
     }
     return $actionWithParamsAndRequest($p, $request);
   });
@@ -172,6 +188,76 @@ function get($apiName, $path, $params, $actionWithParamsAndRequest) {
     'apiName' => $apiName,
     'path' => $path,
     'params' => $params,
+    'method' => 'get',
+  ];
+}
+
+function post($apiName, $path, $params, $actionWithParamsAndRequest) {
+  global $app;
+  $app->post($path, function(Request $request) use($params, $actionWithParamsAndRequest) {
+    $p = array();
+    foreach($params as $index => $value) {
+      $v = null;
+      $v = $request->attributes->get($value);
+      if($v == null) {
+        $v = $request->get($value);
+      }
+      $p[$value] = $v;
+
+    }
+    return $actionWithParamsAndRequest($p, $request);
+  });
+  return [
+    'apiName' => $apiName,
+    'path' => $path,
+    'params' => $params,
+    'method' => 'post',
+  ];
+}
+
+function put($apiName, $path, $params, $actionWithParamsAndRequest) {
+  global $app;
+  $app->put($path, function(Request $request) use($params, $actionWithParamsAndRequest) {
+    $p = array();
+    foreach($params as $index => $value) {
+      $v = null;
+      $v = $request->attributes->get($value);
+      if($v == null) {
+        $v = $request->get($value);
+      }
+      $p[$value] = $v;
+
+    }
+    return $actionWithParamsAndRequest($p, $request);
+  });
+  return [
+    'apiName' => $apiName,
+    'path' => $path,
+    'params' => $params,
+    'method' => 'put',
+  ];
+}
+
+function deleteRequest($apiName, $path, $params, $actionWithParamsAndRequest) {
+  global $app;
+  $app->delete($path, function(Request $request) use($params, $actionWithParamsAndRequest) {
+    $p = array();
+    foreach($params as $index => $value) {
+      $v = null;
+      $v = $request->attributes->get($value);
+      if($v == null) {
+        $v = $request->get($value);
+      }
+      $p[$value] = $v;
+
+    }
+    return $actionWithParamsAndRequest($p, $request);
+  });
+  return [
+    'apiName' => $apiName,
+    'path' => $path,
+    'params' => $params,
+    'method' => 'delete',
   ];
 }
 
